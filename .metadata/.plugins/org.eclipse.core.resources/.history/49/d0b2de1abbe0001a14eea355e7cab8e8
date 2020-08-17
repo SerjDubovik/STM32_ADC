@@ -10,7 +10,7 @@
 
 
 
-/*
+
 unsigned int delay_packet = 0;								// задержка между пакетами. будет равна 7, что значит 1,75 мс
 char flag_UART_in = 0;										// флаг начала приёма посылки по UART
 char swith_modbas = 0;										// переменная переключатель для разбора посылки
@@ -32,7 +32,7 @@ unsigned int 	crc_read_low 			= 0;				// буферные переменные для сравнение контр
 unsigned int 	crc_read_high 			= 0;				//
 unsigned int 	crc_calc_low 			= 0;				//
 unsigned int 	crc_calc_high 			= 0;				//
-*/
+
 
 
 

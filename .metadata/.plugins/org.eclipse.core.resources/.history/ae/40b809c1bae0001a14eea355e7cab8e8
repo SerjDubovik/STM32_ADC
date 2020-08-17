@@ -7,8 +7,6 @@
 
 
 
-
-
 	unsigned short CRC16(int *puchMsg,unsigned short usDataLen );
 	extern void USART1_IRQHandler(void);
 	void Modbus_slave(void);
