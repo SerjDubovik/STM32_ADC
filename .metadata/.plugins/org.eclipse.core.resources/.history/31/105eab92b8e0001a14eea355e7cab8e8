@@ -1,0 +1,181 @@
+#include "stm32f10x.h"
+#include "modbus.h"
+
+
+unsigned int delay_packet = 0;								// задержка между пакетами. будет равна 7, что значит 1,75 мс
+char flag_UART_in = 0;										// флаг начала приёма посылки по UART
+char swith_modbas = 0;										// переменная переключатель для разбора посылки
+
+int 			array_modbas_in[255];						// буфер для приёма из уарта
+int 			count_modbas_in 		= 0;				// счётчик кол-ва принятых байт
+int 			array_modbas_out[255];						// буфер для передачи из уарта
+int 			count_modbas_out 		= 0;				// счётчик кол-ва переданных байт
+int 			buffer_index			= 0;				// счётчик для отправки
+int 			count_transf_array 		= 0;				// счётчик для перегрузки массивов
+
+unsigned short	array_mb[100]			= {};				// массив для хранения принятых/переданных слов
+
+unsigned long 	crc_calc 				= 0;				// расчётная контрольная сумма
+unsigned long 	adrr_var 				= 0;				// собраный адрес из массива принятого по сети. для сравнения.
+unsigned long 	quantity_byte 			= 0;				// кол-во байт которое необходимо записать или считать по сети из памяти
+
+unsigned int 	crc_read_low 			= 0;				// буферные переменные для сравнение контрольной суммы
+unsigned int 	crc_read_high 			= 0;				//
+unsigned int 	crc_calc_low 			= 0;				//
+unsigned int 	crc_calc_high 			= 0;				//
+
+
+
+// Обработчики прерываний
+
+void TIM2_IRQHandler (void)						// обработчик таймера для всяких задержек
+{
+	unsigned short status;
+	status = TIM2->SR;
+	TIM2->SR = ~status;
+
+	if(status & TIM_SR_UIF)
+	{
+
+		if(delay_packet != 0)					// отсчёт времени для слейва
+		{
+			delay_packet--;
+		}
+
+	}
+}
+
+
+
+
+
+
+void USART1_IRQHandler(void)
+{
+	unsigned short temp =  USART1->SR;
+	USART1->SR = 0;
+
+	 if (temp & USART_SR_RXNE)			// RXNE - что-то пришло, можно забирать. сбрасывается при чтении DR
+		{
+
+			array_modbas_in[(count_modbas_in & 0x0ff)] = USART1->DR;			// записываем байт в буферный массив для приёма.
+			count_modbas_in++;										// увеличиваем счётчик байт в буфере
+
+
+			delay_packet = 7;					// запускаем отсчёт 1,75 мс, каждый новый байт будет поддёргивать эту переменную. закончились байты - посылка принята.
+			flag_UART_in = 1;					// флаг старта приёма посылки
+
+			return;
+
+		}
+
+	 if(temp & USART_SR_TC)
+	 {
+		 USART1->CR1 	&= 	~(USART_CR1_TCIE); 		// выключаем прерывание по завершении передачи. Зачем? ... (злесь нужено включать приёмник, а в сварочнике тоже)
+
+		 //GPIOC->BSRR =  GPIO_BSRR_BR12;				// записать 0 в GPIOA.12		// слушаем
+
+		return;
+	 }
+
+	 if (temp & USART_SR_TXE)
+	 {
+		 buffer_index++;								// Увеличиваем индекс
+
+
+		 USART1->DR = array_modbas_out[buffer_index];   // Берем данные из буффера.
+
+		if(buffer_index == (count_modbas_out-1))  		// Вывели весь буффер?
+			{
+				USART1->CR1 	&= 	~(USART_CR1_TXEIE); 	// Запрещаем прерывание по опустошению - передача закончена
+				USART1->CR1 	|= 	USART_CR1_TCIE; 		// включаем прерывание по завершении передачи
+			}
+	 }
+}
+
+
+
+void ADC1_2_IRQHandler(void)
+{
+    if(ADC1->SR & ADC_SR_EOC)
+	{
+
+	}
+
+	ADC1->SR=0;	//сбрасываем все флаги в регистре статуса
+}
+
+
+void init_timer2(void)						// Настройка таймера 2. Общий для отсчётов задержек
+{
+	 RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+	//TIM2->CR1 |= TIM_CR1_CKD_1;
+	TIM2->CR1 |= TIM_CR1_ARPE; 				//shadow
+	//TIM2->CR1 |= TIM_CR1_URS;
+	TIM2->CR1 |= TIM_CR1_DIR;
+
+	TIM2->PSC = 71;							// 72MHz/(PSC+1)	один тик  - 1 мкс
+	TIM2->ARR = 249;
+
+	//TIM2->DIER |= TIM_DIER_TIE;
+	TIM2->DIER |= TIM_DIER_UIE;
+
+	TIM2->CR1 |= TIM_CR1_CEN;
+
+	NVIC_EnableIRQ (TIM2_IRQn);
+}
+
+void init_modbus(void)
+{
+	init_timer2();
+
+
+	// Вычислим и настроим бодрейт. (72 000 000/19200)/16 = 234.375 Получаем старшую часть 0хЕА, а младшую 0х6. Итого BRR = 0xEA6.
+	// (72 000 000 / 115 200) / 16 = 39,0625
+	// 39 = 27h
+	// 0.0625 * 16 = 1 (нужно округлять до целого в большую. не в этом случае канеш)
+	// 27h и 1h = 271h
+
+	/*
+	 * 115200 - 0x0271
+	 * 76800 - 0x03AA
+	 * 57600 - 0x04E2
+	 * 38400 - 0x0753
+	 * 28800 - 0x09C4
+	 * 19200 - 0x0EA6
+	 * 14400 - 0x1388
+	 * 9600 - 0x1D4C
+	 * 4800 - 0x3A98
+	 * 2400 - 0x7530
+	 */
+
+	// Задание режима работы
+	USART1->BRR   =   0x0271;                           // 115200
+	USART1->CR1  &=  ~USART_CR1_M;                      // 8 бит данных
+	USART1->CR2  &=  ~USART_CR2_STOP;                   // кол-во стоп-бит: 1
+
+	// Управление работой
+	USART1->CR1  |=   USART_CR1_TE;                     // включение передатчика
+	USART1->CR1  |=   USART_CR1_RE;                     // включение приёмника
+
+	USART1->CR1  |=   USART_CR1_UE;                     // включение модуля USART4
+	// Разрешить прерывания
+	NVIC_EnableIRQ (USART1_IRQn);
+	USART1->CR1  |=	USART_CR1_RXNEIE;				    // прерывание по завершению приёма
+	//USART1->CR1  |= 	USART_CR1_TCIE;                 // прерывание по завершению передачи
+
+	__enable_irq ();
+
+
+}
+
+
+void Modbus_slave(void)
+{
+
+}
+
+
+
+
+

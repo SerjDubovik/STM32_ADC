@@ -95,9 +95,20 @@ void USART1_IRQHandler(void)
 
 
 
+void ADC1_2_IRQHandler(void)
+{
+    if(ADC1->SR & ADC_SR_EOC)
+	{
+
+	}
+
+	ADC1->SR=0;	//сбрасываем все флаги в регистре статуса
+}
+
+
 void init_timer2(void)						// Настройка таймера 2. Общий для отсчётов задержек
 {
-	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+	 RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
 	//TIM2->CR1 |= TIM_CR1_CKD_1;
 	TIM2->CR1 |= TIM_CR1_ARPE; 				//shadow
 	//TIM2->CR1 |= TIM_CR1_URS;
@@ -113,8 +124,6 @@ void init_timer2(void)						// Настройка таймера 2. Общий для отсчётов задержек
 
 	NVIC_EnableIRQ (TIM2_IRQn);
 }
-
-
 
 void init_modbus(void)
 {
@@ -403,27 +412,6 @@ void Modbus_slave(void)
 
 
 
-
-
-// функция для расчёта контрольной суммы
-unsigned short CRC16(int *puchMsg,  /* Сообщение       */
-                            unsigned short usDataLen /* Длина сообщения */)
-{
-    unsigned short crc = 0xFFFF;
-    unsigned short uIndex;
-    int i;
-    for (uIndex = 0; uIndex < usDataLen; uIndex += 1) {
-        crc ^= (unsigned short)*(puchMsg + uIndex);
-        for (i = 8; i != 0; i -= 1) {
-          if ((crc & 0x0001) == 0) { crc >>= 1; }
-          else { crc >>= 1; crc ^= 0xA001; }			// полином задаём здесь
-        }
-    }
-    // Изменим порядок следования байт
- //   crc = ((crc >> 8) & 0x00FF) | ((crc << 8) & 0xFF00);
-    return crc;
-
-}
 
 
 

@@ -55,7 +55,7 @@ int main(void)
 {
     InitClk();
 
-    init_modbus();
+
 
 
 	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN; 				// Разрешить тактирование порта A

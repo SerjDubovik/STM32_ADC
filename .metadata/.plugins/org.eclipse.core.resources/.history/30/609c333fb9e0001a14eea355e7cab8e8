@@ -55,8 +55,6 @@ int main(void)
 {
     InitClk();
 
-    init_modbus();
-
 
 	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN; 				// Разрешить тактирование порта A
 
@@ -154,7 +152,6 @@ int main(void)
 
 	for(;;)
 	{
-		Modbus_slave();
 
 	} // скобочка бесконечного цикла
 } // скобочка mian
