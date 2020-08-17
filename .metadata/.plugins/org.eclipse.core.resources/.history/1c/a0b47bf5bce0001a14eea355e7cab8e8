@@ -10,9 +10,29 @@
 
 
 
+/*
+unsigned int delay_packet = 0;								// задержка между пакетами. будет равна 7, что значит 1,75 мс
+char flag_UART_in = 0;										// флаг начала приёма посылки по UART
+char swith_modbas = 0;										// переменная переключатель для разбора посылки
+
+int 			array_modbas_in[255];						// буфер для приёма из уарта
+int 			count_modbas_in 		= 0;				// счётчик кол-ва принятых байт
+int 			array_modbas_out[255];						// буфер для передачи из уарта
+int 			count_modbas_out 		= 0;				// счётчик кол-ва переданных байт
+int 			buffer_index			= 0;				// счётчик для отправки
+int 			count_transf_array 		= 0;				// счётчик для перегрузки массивов
 
 unsigned short	array_mb[100]			= {};				// массив для хранения принятых/переданных слов
 
+unsigned long 	crc_calc 				= 0;				// расчётная контрольная сумма
+unsigned long 	adrr_var 				= 0;				// собраный адрес из массива принятого по сети. для сравнения.
+unsigned long 	quantity_byte 			= 0;				// кол-во байт которое необходимо записать или считать по сети из памяти
+
+unsigned int 	crc_read_low 			= 0;				// буферные переменные для сравнение контрольной суммы
+unsigned int 	crc_read_high 			= 0;				//
+unsigned int 	crc_calc_low 			= 0;				//
+unsigned int 	crc_calc_high 			= 0;				//
+*/
 
 
 
@@ -61,7 +81,6 @@ void DMA1_Channel1_IRQHandler(void)
 
 int main(void)
 {
-
     InitClk();
 
     init_modbus();
@@ -94,8 +113,8 @@ int main(void)
 
 
 	//Настроить делитель для ADC
-	RCC->CFGR &= ~RCC_CFGR_ADCPRE;             			//Очистка битов предделителя "ADC Prescaler"
-	RCC->CFGR |=  RCC_CFGR_ADCPRE_DIV6;        			//Установить "ADC Prescaler" равным 6
+	RCC->CFGR &= ~RCC_CFGR_ADCPRE;             //Очистка битов предделителя "ADC Prescaler"
+	RCC->CFGR |=  RCC_CFGR_ADCPRE_DIV6;        //Установить "ADC Prescaler" равным 6
 
 	ADC1->CR1 = 0; 										// Обнулить регистр управления
 	ADC1->SQR1 = 0; 									// Обнулить регистр SQR1

@@ -1,16 +1,6 @@
-21:54:40 **** Incremental Build of configuration Debug for project STM32_ADC ****
+22:47:20 **** Incremental Build of configuration Debug for project STM32_ADC ****
 make -j4 all 
-Building file: ../src/main.c
-Invoking: MCU GCC Compiler
-D:\GIT\GitHub\STM32_ADC\STM32_ADC\Debug
-arm-none-eabi-gcc -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -DSTM32 -DSTM32F1 -DSTM32F103C8Tx -DDEBUG -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER -I"D:/GIT/GitHub/STM32_ADC/STM32_ADC/StdPeriph_Driver/inc" -I"D:/GIT/GitHub/STM32_ADC/STM32_ADC/inc" -I"D:/GIT/GitHub/STM32_ADC/STM32_ADC/CMSIS/device" -I"D:/GIT/GitHub/STM32_ADC/STM32_ADC/CMSIS/core" -O0 -g3 -Wall -fmessage-length=0 -ffunction-sections -c -MMD -MP -MF"src/main.d" -MT"src/main.o" -o "src/main.o" "../src/main.c"
-../src/main.c: In function 'main':
-../src/main.c:186:3: error: 'array_mb' undeclared (first use in this function)
-   array_mb[8]++;
-   ^~~~~~~~
-../src/main.c:186:3: note: each undeclared identifier is reported only once for each function it appears in
-src/subdir.mk:30: recipe for target 'src/main.o' failed
-make: *** [src/main.o] Error 1
+make: Nothing to be done for 'all'.
 
-21:54:41 Build Finished (took 806ms)
+22:47:20 Build Finished (took 410ms)
 

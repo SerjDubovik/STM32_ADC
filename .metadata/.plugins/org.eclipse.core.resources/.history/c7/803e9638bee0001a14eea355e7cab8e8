@@ -61,7 +61,6 @@ void DMA1_Channel1_IRQHandler(void)
 
 int main(void)
 {
-
     InitClk();
 
     init_modbus();
@@ -94,8 +93,8 @@ int main(void)
 
 
 	//Настроить делитель для ADC
-	RCC->CFGR &= ~RCC_CFGR_ADCPRE;             			//Очистка битов предделителя "ADC Prescaler"
-	RCC->CFGR |=  RCC_CFGR_ADCPRE_DIV6;        			//Установить "ADC Prescaler" равным 6
+	RCC->CFGR &= ~RCC_CFGR_ADCPRE;             //Очистка битов предделителя "ADC Prescaler"
+	RCC->CFGR |=  RCC_CFGR_ADCPRE_DIV6;        //Установить "ADC Prescaler" равным 6
 
 	ADC1->CR1 = 0; 										// Обнулить регистр управления
 	ADC1->SQR1 = 0; 									// Обнулить регистр SQR1
