@@ -1,6 +1,6 @@
-22:47:20 **** Incremental Build of configuration Debug for project STM32_ADC ****
+12:33:49 **** Incremental Build of configuration Debug for project STM32_ADC ****
 make -j4 all 
 make: Nothing to be done for 'all'.
 
-22:47:20 Build Finished (took 410ms)
+12:33:50 Build Finished (took 829ms)
 
